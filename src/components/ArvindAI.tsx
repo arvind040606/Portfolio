@@ -171,7 +171,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[999990] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
       <div className="relative w-full max-w-2xl h-[620px] max-h-[90vh] bg-[#090b10] border border-[#00f0ff]/30 rounded-2xl shadow-[0_0_50px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden font-sans">
         
         {/* Header Bar */}

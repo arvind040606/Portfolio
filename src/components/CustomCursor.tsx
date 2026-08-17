@@ -48,20 +48,20 @@ export const CustomCursor: React.FC = () => {
 
   return (
     <div
-      className="fixed top-0 left-0 pointer-events-none z-[999999] transition-transform duration-75 ease-out"
+      className="fixed top-0 left-0 pointer-events-none z-[2147483647] transition-transform duration-75 ease-out"
       style={{
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
       }}
     >
       <div
-        className={`-translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center transition-all duration-300 ${
+        className={`-translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center transition-all duration-300 pointer-events-none ${
           isHovered
-            ? 'w-12 h-12 bg-[#00f0ff] text-black shadow-[0_0_25px_rgba(0,240,255,0.7)] scale-110'
-            : 'w-3.5 h-3.5 bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.6)]'
+            ? 'w-12 h-12 bg-[#00f0ff] text-black shadow-[0_0_25px_rgba(0,240,255,0.8)] scale-110'
+            : 'w-3.5 h-3.5 bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.7)]'
         }`}
       >
         {isHovered && cursorText && (
-          <span className="text-[9px] font-extrabold tracking-widest font-mono uppercase text-center leading-none px-1">
+          <span className="text-[9px] font-extrabold tracking-widest font-mono uppercase text-center leading-none px-1 pointer-events-none">
             {cursorText}
           </span>
         )}
