@@ -17,6 +17,7 @@ export interface Project {
   tagline: string;
   description: string;
   liveUrl?: string;
+  apkUrl?: string;
   githubUrl?: string;
   featured: boolean;
   status: "Live" | "Production" | "Hackathon Winner" | "R&D" | "PERSONAL PROJECT";
@@ -34,6 +35,7 @@ export const projects: Project[] = [
     tagline: "AI-powered student attendance & academic assistant",
     description: "A mobile-first, privacy-focused academic companion that empowers students to manage attendance thresholds, automate timetable parsing via AI, track assignments, and coordinate schedules locally with zero server surveillance.",
     liveUrl: "https://bunkmate-lilac.vercel.app",
+    apkUrl: "https://drive.google.com/file/d/1amkI3WKchLE8pqZHOSwPa1UqXaSepN0V/view?usp=sharing",
     featured: true,
     status: "Live",
     technologies: [
@@ -66,13 +68,14 @@ export const projects: Project[] = [
       implementation: [
         "Engineered an offline-first state machine that defers network calls and reconciles updates seamlessly when connectivity returns.",
         "Implemented high-performance touch gestures for quick swipe-based class attendance logging.",
-        "Integrated Web Crypto API for zero-knowledge data backups."
+        "Integrated Web Crypto API for zero-knowledge data backups.",
+        "Built and distributed an installable Android APK build hosted on Google Drive."
       ],
       challenges: [
         "Handling diverse, unstructured schedule formats (scanned documents, photos, erratic grid layouts) reliably with AI vision APIs.",
         "Preventing UI layout jank on low-end Android WebViews while rendering real-time attendance percentage metrics."
       ],
-      results: "Built a highly responsive, standalone web/PWA application deployed live on Vercel with zero latency logging and 100% data privacy guarantees.",
+      results: "Built a highly responsive, standalone web/PWA application deployed live on Vercel with zero latency logging, 100% data privacy guarantees, and a standalone Android APK build.",
       futureWork: [
         "Automated push notifications for low-attendance alerts before exams.",
         "Multi-university calendar import standard integration."

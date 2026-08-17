@@ -10,6 +10,7 @@ export interface ProjectKnowledge {
   technologies: string[];
   features: string[];
   liveDemoUrl?: string;
+  apkDownloadUrl?: string;
   githubUrl?: string;
 }
 
@@ -89,8 +90,10 @@ export const ARVIND_PROJECTS_KNOWLEDGE: Record<string, ProjectKnowledge> = {
       "Swipe Attendance Interactions: Swipe right to log attendance, swipe left to bunk.",
       "Zero-Knowledge Local Security: All timetable and attendance data is encrypted with 256-bit AES-GCM (PBKDF2 key derivation) before writing to client IndexedDB.",
       "Offline PWA Support: Functions smoothly without an internet connection.",
+      "Installable Android APK: Available for direct Android installation."
     ],
     liveDemoUrl: "https://bunkmate-lilac.vercel.app/",
+    apkDownloadUrl: "https://drive.google.com/file/d/1amkI3WKchLE8pqZHOSwPa1UqXaSepN0V/view?usp=sharing",
     githubUrl: "https://github.com/arvind040606",
   },
   cardioguard: {
@@ -169,11 +172,13 @@ export function retrieveContextForQuery(query: string, historySummary: string = 
     text.includes("timetable") ||
     text.includes("encrypt") ||
     text.includes("aes") ||
-    text.includes("ocr")
+    text.includes("ocr") ||
+    text.includes("apk") ||
+    text.includes("android")
   ) {
     const p = ARVIND_PROJECTS_KNOWLEDGE.bunkmate;
     chunks.push(
-      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}.`
+      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}. APK Download: ${p.apkDownloadUrl}.`
     );
   }
 

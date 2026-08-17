@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, ArrowUpRight, RefreshCw, Maximize2, ExternalLink, Smartphone, Monitor, Lock } from 'lucide-react';
+import { BookOpen, ArrowUpRight, RefreshCw, ExternalLink, Smartphone, Monitor, Lock, Download } from 'lucide-react';
 import { Project, projects } from '../data/projects';
 
 interface SelectedWorkProps {
@@ -146,6 +146,19 @@ export const SelectedWork: React.FC<SelectedWorkProps> = ({ onSelectCaseStudy, o
                     <span>OPEN LIVE ↗</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </a>
+
+                  {project.apkUrl && (
+                    <a
+                      href={project.apkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-cursor="APK"
+                      className="px-6 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 font-mono font-bold text-xs tracking-wider hover:bg-emerald-400 hover:text-black transition-all duration-300 flex items-center gap-2 shadow-[0_8px_20px_rgba(16,185,129,0.2)] transform hover:-translate-y-0.5"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>DOWNLOAD APK 📲</span>
+                    </a>
+                  )}
 
                   <button
                     onClick={() => onSelectCaseStudy(project)}

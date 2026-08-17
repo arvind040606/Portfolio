@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Bot, User, RefreshCw, ExternalLink, Github, Mail, AlertTriangle } from 'lucide-react';
+import { X, Send, Sparkles, Bot, User, RefreshCw, ExternalLink, Github, Mail, AlertTriangle, Smartphone } from 'lucide-react';
 import { fetchArvindAIResponse, ChatMessageItem } from '../services/arvindAIService';
 import { ARVIND_PROJECTS_KNOWLEDGE, ARVIND_PROFILE_KNOWLEDGE } from '../data/arvindVerifiedKnowledge';
 
@@ -40,10 +40,10 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     "hlo",
     "who is Arvind?",
     "how old is he?",
-    "which college does he study in?",
+    "tell me about BunkMate",
+    "where can I download the BunkMate APK?",
     "what is his best project?",
     "why did he build it?",
-    "what technologies does it use?",
     "compare BunkMate and CardioGuard from an engineering perspective",
   ];
 
@@ -86,6 +86,9 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
 
     if (lower.includes('bunkmate')) {
       links.push({ label: 'Try BunkMate Live', url: ARVIND_PROJECTS_KNOWLEDGE.bunkmate.liveDemoUrl!, icon: 'external' });
+      if (ARVIND_PROJECTS_KNOWLEDGE.bunkmate.apkDownloadUrl) {
+        links.push({ label: 'Download BunkMate APK 📲', url: ARVIND_PROJECTS_KNOWLEDGE.bunkmate.apkDownloadUrl, icon: 'external' });
+      }
     }
     if (lower.includes('cardioguard')) {
       links.push({ label: 'Try CardioGuard AI Live', url: ARVIND_PROJECTS_KNOWLEDGE.cardioguard.liveDemoUrl!, icon: 'external' });
