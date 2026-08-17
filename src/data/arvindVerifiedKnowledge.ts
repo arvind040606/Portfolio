@@ -19,7 +19,7 @@ export interface ProfileKnowledge {
   education: string;
   college: string;
   location: string;
-  dob: string;
+  dateOfBirth: string;
   bio: string;
   tagline: string;
   focus: string;
@@ -39,9 +39,9 @@ export interface ProfileKnowledge {
   };
 }
 
-// Calculate dynamic age from DOB (June 6, 2004)
+// Calculate dynamic current age from Date of Birth (27 February 2006) at runtime
 export function getArvindAge(): number {
-  const dob = new Date(2004, 5, 6); // Month index 5 is June
+  const dob = new Date(2006, 1, 27); // Month index 1 is February (2006-02-27)
   const today = new Date();
   let age = today.getFullYear() - dob.getFullYear();
   const monthDiff = today.getMonth() - dob.getMonth();
@@ -57,7 +57,7 @@ export const ARVIND_PROFILE_KNOWLEDGE: ProfileKnowledge = {
   education: "B.Tech in Computer Science Engineering",
   college: "Amritsar Group of Colleges (AGC), Amritsar, Punjab",
   location: "Punjab, India",
-  dob: "2004-06-06",
+  dateOfBirth: "2006-02-27",
   bio: "Computer Science Engineering student focused on building AI-powered full-stack products, privacy-first architectures, and intelligent web applications.",
   tagline: "Building intelligent products, not just websites.",
   focus: "AI + Full-Stack Product Development",
@@ -156,7 +156,7 @@ export function retrieveContextForQuery(query: string, historySummary: string = 
   const text = (query + " " + historySummary).toLowerCase();
   const chunks: string[] = [];
 
-  // Profile basics
+  // Profile basics (Age calculated dynamically at runtime from dateOfBirth)
   chunks.push(
     `ARVIND PROFILE: ${ARVIND_PROFILE_KNOWLEDGE.name} (${ARVIND_PROFILE_KNOWLEDGE.nickname}), ${getArvindAge()} years old. Education: ${ARVIND_PROFILE_KNOWLEDGE.education} at ${ARVIND_PROFILE_KNOWLEDGE.college}. Location: ${ARVIND_PROFILE_KNOWLEDGE.location}. Focus: ${ARVIND_PROFILE_KNOWLEDGE.focus}. Contact: Email=${ARVIND_PROFILE_KNOWLEDGE.contact.email}, LinkedIn=${ARVIND_PROFILE_KNOWLEDGE.contact.linkedin}, GitHub=${ARVIND_PROFILE_KNOWLEDGE.contact.github}.`
   );
