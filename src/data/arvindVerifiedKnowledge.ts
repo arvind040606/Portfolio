@@ -2,6 +2,8 @@
 // ARVIND VERIFIED KNOWLEDGE BASE & LIGHTWEIGHT RETRIEVAL LAYER
 // =========================================================================
 
+import { getLearnedKnowledgeForQuery } from '../services/arvindLearningEngine';
+
 export interface ProjectKnowledge {
   name: string;
   tagline: string;
@@ -93,7 +95,7 @@ export const ARVIND_PROJECTS_KNOWLEDGE: Record<string, ProjectKnowledge> = {
       "Installable Android APK: Available for direct Android installation."
     ],
     liveDemoUrl: "https://bunkmate-lilac.vercel.app/",
-    apkDownloadUrl: "https://drive.google.com/file/d/1amkI3WKchLE8pqZHOSwPa1UqXaSepN0V/view?usp=sharing",
+    apkDownloadUrl: "https://drive.google.com/file/d/14ueCD6yJ3qqg8BcQCCSpD4Y5NYj3cR24/view?usp=sharing",
     githubUrl: "https://github.com/arvind040606",
   },
   cardioguard: {
@@ -153,7 +155,7 @@ export const ARVIND_PROJECTS_KNOWLEDGE: Record<string, ProjectKnowledge> = {
 
 /**
  * Pruned Context Retriever for Gemini Calls
- * Extracts only relevant facts for the query to optimize tokens.
+ * Combines verified ground-truth knowledge + relevant learned knowledge memory layer.
  */
 export function retrieveContextForQuery(query: string, historySummary: string = ""): string {
   const text = (query + " " + historySummary).toLowerCase();
@@ -234,6 +236,17 @@ export function retrieveContextForQuery(query: string, historySummary: string = 
     chunks.push(
       `VERIFIED SKILLS: Languages: ${s.languages.join(", ")}. Frontend: ${s.frontend.join(", ")}. Backend: ${s.backend.join(", ")}. Databases: ${s.databases.join(", ")}. AI/ML: ${s.ai_ml.join(", ")}. Security: ${s.security.join(", ")}.`
     );
+  }
+
+  // Retrieve matching Learned Knowledge items safely
+  try {
+    const learnedItems = getLearnedKnowledgeForQuery(query);
+    if (learnedItems.length > 0) {
+      const learnedText = learnedItems.map((item) => `LEARNED KNOWLEDGE (${item.topic}): ${item.content}`).join('\n');
+      chunks.push(`VALIDATED LEARNED MEMORY:\n${learnedText}`);
+    }
+  } catch (err) {
+    // Ignore client-side learning retrieval if window context unavailable (e.g. SSR)
   }
 
   return chunks.join("\n\n");

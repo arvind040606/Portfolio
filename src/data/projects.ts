@@ -35,7 +35,7 @@ export const projects: Project[] = [
     tagline: "AI-powered student attendance & academic assistant",
     description: "A mobile-first, privacy-focused academic companion that empowers students to manage attendance thresholds, automate timetable parsing via AI, track assignments, and coordinate schedules locally with zero server surveillance.",
     liveUrl: "https://bunkmate-lilac.vercel.app",
-    apkUrl: "https://drive.google.com/file/d/1amkI3WKchLE8pqZHOSwPa1UqXaSepN0V/view?usp=sharing",
+    apkUrl: "https://drive.google.com/file/d/14ueCD6yJ3qqg8BcQCCSpD4Y5NYj3cR24/view?usp=sharing",
     featured: true,
     status: "Live",
     technologies: [

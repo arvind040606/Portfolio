@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Bot, User, RefreshCw, ExternalLink, Github, Mail, AlertTriangle, Smartphone } from 'lucide-react';
+import { X, Send, Sparkles, Bot, User, RefreshCw, ExternalLink, Github, Mail, AlertTriangle } from 'lucide-react';
 import { fetchArvindAIResponse, ChatMessageItem } from '../services/arvindAIService';
 import { ARVIND_PROJECTS_KNOWLEDGE, ARVIND_PROFILE_KNOWLEDGE } from '../data/arvindVerifiedKnowledge';
+import { getTopSuggestedQuestions } from '../services/arvindLearningEngine';
 
 interface ArvindAIProps {
   isOpen: boolean;
@@ -32,20 +33,26 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
   // Session memory for LLM / local context
   const [sessionHistory, setSessionHistory] = useState<ChatMessageItem[]>([]);
   const [isThinking, setIsThinking] = useState(false);
+  const [suggestionChips, setSuggestionChips] = useState<string[]>([]);
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const defaultSuggestions = [
-    "hlo",
-    "who is Arvind?",
-    "how old is he?",
-    "tell me about BunkMate",
-    "where can I download the BunkMate APK?",
-    "what is his best project?",
-    "why did he build it?",
-    "compare BunkMate and CardioGuard from an engineering perspective",
-  ];
+  useEffect(() => {
+    try {
+      setSuggestionChips(getTopSuggestedQuestions());
+    } catch (err) {
+      setSuggestionChips([
+        "hlo",
+        "who is Arvind?",
+        "how old is he?",
+        "tell me about BunkMate",
+        "where can I download the BunkMate APK?",
+        "how does CardioGuard AI explain predictions?",
+        "what is his best project?",
+      ]);
+    }
+  }, []);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -124,7 +131,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     if (!textToSend) setInput('');
     setIsThinking(true);
 
-    // Call hybrid AI service (Local Knowledge Router + Gemini 2.5 internally)
+    // Call hybrid AI service (Local Knowledge Router + Progressive Memory Layer + Gemini 2.5)
     const serviceResult = await fetchArvindAIResponse(query, sessionHistory);
     const rawAiResponse = serviceResult.text;
 
@@ -300,7 +307,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
 
         {/* Quick Suggestion Chips */}
         <div className="p-3 px-6 bg-[#040508]/80 border-t border-white/10 overflow-x-auto flex gap-2 no-scrollbar">
-          {defaultSuggestions.map((prompt) => (
+          {suggestionChips.map((prompt) => (
             <button
               key={prompt}
               onClick={() => handleSend(prompt)}
