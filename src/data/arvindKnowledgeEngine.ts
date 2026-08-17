@@ -1,6 +1,8 @@
 // =========================================================================
-// ARVIND.AI GROUNDED PERSONA & CONTEXT KNOWLEDGE ENGINE
+// ARVIND.AI LOCAL RESPONSE ROUTER & INTENT ENGINE
 // =========================================================================
+
+import { ARVIND_PROFILE_KNOWLEDGE, ARVIND_PROJECTS_KNOWLEDGE, getArvindAge } from './arvindVerifiedKnowledge.js';
 
 export type KnowledgeTopic =
   | 'bunkmate'
@@ -12,385 +14,311 @@ export type KnowledgeTopic =
   | 'identity'
   | 'contact'
   | 'hire'
-  | 'interview'
   | 'general';
 
-export interface ContextState {
-  activeTopic: KnowledgeTopic;
-  lastUserQuery: string;
-  turns: number;
+export interface RouteResult {
+  type: 'LOCAL' | 'GEMINI';
+  text?: string;
+  topic?: KnowledgeTopic;
+  reason?: string;
 }
 
-let globalContext: ContextState = {
-  activeTopic: 'general',
-  lastUserQuery: '',
-  turns: 0,
-};
+let activeTopic: KnowledgeTopic = 'general';
 
 export function resetContextState() {
-  globalContext = {
-    activeTopic: 'general',
-    lastUserQuery: '',
-    turns: 0,
-  };
+  activeTopic = 'general';
 }
 
 export function getActiveTopic(): KnowledgeTopic {
-  return globalContext.activeTopic;
+  return activeTopic;
 }
 
-export function getContextualSuggestions(topic: KnowledgeTopic = globalContext.activeTopic): string[] {
-  switch (topic) {
-    case 'bunkmate':
-      return [
-        "Why did Arvind choose offline-first?",
-        "How does timetable AI OCR work?",
-        "How is attendance data encrypted?",
-        "Tell me about CardioGuard AI",
-      ];
-    case 'cardioguard':
-      return [
-        "Why use XGBoost for cardiac risk?",
-        "How does SHAP explain predictions?",
-        "What's the inference latency?",
-        "Tell me about BunkMate",
-      ];
-    case 'atmosphere':
-      return [
-        "How does the weather NLP engine work?",
-        "Which APIs does Atmosphere use?",
-        "How does location resolution work?",
-        "Tell me about BunkMate",
-      ];
-    case 'campusbrain':
-    case 'navi':
-      return [
-        "Tell me about BunkMate",
-        "Tell me about CardioGuard AI",
-        "What is Arvind's primary tech stack?",
-        "Is Arvind open for engineering roles?",
-      ];
-    case 'hire':
-    case 'contact':
-      return [
-        "What are Arvind's primary skills?",
-        "What's his GitHub link?",
-        "What is Arvind's best project?",
-        "Tell me about BunkMate",
-      ];
-    default:
-      return [
-        "What's Arvind's best project?",
-        "Why did he build BunkMate?",
-        "How does CardioGuard AI use SHAP?",
-        "Is Arvind open for engineering roles?",
-      ];
+/**
+ * Evaluates basic arithmetic expressions locally without calling Gemini
+ */
+function tryLocalMathEvaluation(query: string): string | null {
+  const clean = query.replace(/\?/g, '').trim().toLowerCase();
+  const match = clean.match(/^(?:what is\s+)?(\d+(?:\.\d+)?)\s*([\+\-\*\/])\s*(\d+(?:\.\d+)?)$/i);
+  if (match) {
+    const num1 = parseFloat(match[1]);
+    const op = match[2];
+    const num2 = parseFloat(match[3]);
+    let res = 0;
+    if (op === '+') res = num1 + num2;
+    if (op === '-') res = num1 - num2;
+    if (op === '*') res = num1 * num2;
+    if (op === '/') res = num2 !== 0 ? num1 / num2 : 0;
+    return `The result of ${num1} ${op} ${num2} is ${res}.`;
   }
+  return null;
 }
 
-export function processArvindAIQuery(userPrompt: string): { response: string; topic: KnowledgeTopic; suggestions: string[] } {
-  const raw = userPrompt.trim();
-  const q = raw.toLowerCase();
-  globalContext.turns += 1;
-  globalContext.lastUserQuery = raw;
+/**
+ * Local Router for ARVIND.AI
+ * Determines whether a message can be answered immediately from local knowledge or requires Gemini 2.5 LLM reasoning.
+ */
+export function routeUserQuery(rawQuery: string, history: Array<{ role: string; content: string }> = []): RouteResult {
+  const query = rawQuery.trim();
+  const q = query.toLowerCase();
 
-  // 1. Identity & Clarification Questions
+  // 1. Check for sensitive / private information requests
   if (
-    q.includes('are you arvind') ||
-    q.includes('are you actually arvind') ||
-    q.includes('are you real') ||
-    q.includes('are you human')
+    q.includes('password') ||
+    q.includes('api key') ||
+    q.includes('token') ||
+    q.includes('secret') ||
+    q.includes('home address') ||
+    q.includes('exact address') ||
+    q.includes('credit card') ||
+    q.includes('db credential')
   ) {
-    globalContext.activeTopic = 'identity';
     return {
-      response:
-        "No — I'm ARVIND.AI, a virtual AI representation of Arvind Madaan. I'm trained on his verified portfolio, technical architectures, and development philosophy. I can explain his projects like BunkMate or CardioGuard, discuss his full-stack stack, or help you connect with him!",
-      topic: 'identity',
-      suggestions: getContextualSuggestions('identity'),
+      type: 'LOCAL',
+      text: "I can't share private or sensitive information about Arvind.",
+      topic: 'general',
     };
   }
 
+  // 2. Math evaluation
+  const mathRes = tryLocalMathEvaluation(query);
+  if (mathRes) {
+    return { type: 'LOCAL', text: mathRes, topic: 'general' };
+  }
+
+  // 3. Simple Greetings & Conversational Closures
+  if (/^(hlo|hello|hi|hey|yo|sup|greetings)\b/i.test(q)) {
+    return {
+      type: 'LOCAL',
+      text: "Hey! 👋 What's up? Ask me anything about Arvind's projects, tech stack, or engineering background!",
+      topic: 'identity',
+    };
+  }
+
+  if (/^(thanks|thank you|thx)\b/i.test(q)) {
+    return {
+      type: 'LOCAL',
+      text: "You're welcome! Let me know if you have any other questions about Arvind's projects or background.",
+      topic: 'general',
+    };
+  }
+
+  if (/^(bye|goodbye|cya|see ya)\b/i.test(q)) {
+    return {
+      type: 'LOCAL',
+      text: "Catch you later! Feel free to drop by anytime.",
+      topic: 'general',
+    };
+  }
+
+  // 4. Complex Reasoning / Comparison / Deep Architecture -> Route to GEMINI
   if (
-    q.startsWith('who are you') ||
-    q.startsWith('what is this') ||
-    q.includes('what are you') ||
-    q.includes('tell me about yourself') ||
+    q.includes('compare') ||
+    q.includes(' vs ') ||
+    q.includes(' versus ') ||
+    q.includes('why is the architecture') ||
+    q.includes('engineering perspective') ||
+    q.includes('tradeoff') ||
+    q.includes('trade-off')
+  ) {
+    return {
+      type: 'GEMINI',
+      reason: 'Complex Reasoning / Architectural Comparison Query',
+    };
+  }
+
+  // 5. Personal Profile Queries
+  if (
     q.includes('who is arvind') ||
-    q.includes('about arry') ||
-    q.includes('about arvind')
+    q.includes('tell me about arvind') ||
+    q.includes('who are you') ||
+    q.includes('what is arvind.ai') ||
+    q.includes('about arry')
   ) {
-    globalContext.activeTopic = 'identity';
+    activeTopic = 'identity';
     return {
-      response:
-        "Hey! Arvind Madaan (also known as Arry) is a Computer Science Engineering student and AI/Full-Stack developer from Punjab, India. He builds high-performance, privacy-first web platforms and intelligent AI tools like BunkMate, CardioGuard AI, and Atmosphere AI.",
+      type: 'LOCAL',
+      text: "Arvind Madaan (also known as Arry) is a Computer Science Engineering student and AI/Full-Stack developer from Punjab, India. He builds high-performance, privacy-first web platforms and intelligent AI tools like BunkMate, CardioGuard AI, and Atmosphere AI.",
       topic: 'identity',
-      suggestions: getContextualSuggestions('identity'),
     };
   }
 
-  // 2. Natural Interview Questions
-  if (
-    q.includes('best project') ||
-    q.includes('top project') ||
-    q.includes('favorite project') ||
-    q.includes('most proud')
-  ) {
-    globalContext.activeTopic = 'bunkmate';
+  if (q.includes('how old') || q.includes('his age') || q.includes('age of arvind')) {
     return {
-      response:
-        "Yeah — Arvind considers BunkMate his flagship full-stack project because of its offline-first privacy architecture and direct daily impact for students. That said, CardioGuard AI is his most technical ML project given its trained XGBoost classification model and SHAP TreeExplainer explainability engine.",
-      topic: 'bunkmate',
-      suggestions: getContextualSuggestions('bunkmate'),
+      type: 'LOCAL',
+      text: `Arvind is ${getArvindAge()} years old.`,
+      topic: 'identity',
     };
   }
 
   if (
-    q.includes('why did you build bunkmate') ||
-    q.includes('why bunkmate') ||
-    q.includes('reason for bunkmate')
+    q.includes('college') ||
+    q.includes('university') ||
+    q.includes('where does he study') ||
+    q.includes('what does arvind study')
   ) {
-    globalContext.activeTopic = 'bunkmate';
     return {
-      response:
-        "Actually, Arvind built BunkMate because traditional student attendance apps are bloated, invasive, and rely on server tracking. He wanted a fast, mobile-first companion where attendance calculations, AI timetable vision parsing, and schedule security happen 100% locally on the device.",
-      topic: 'bunkmate',
-      suggestions: getContextualSuggestions('bunkmate'),
+      type: 'LOCAL',
+      text: `Arvind is pursuing a ${ARVIND_PROFILE_KNOWLEDGE.education} at ${ARVIND_PROFILE_KNOWLEDGE.college}.`,
+      topic: 'identity',
     };
   }
 
-  if (
-    q.includes('hardest part') ||
-    q.includes('biggest challenge') ||
-    q.includes('difficult challenge')
-  ) {
-    globalContext.activeTopic = 'bunkmate';
+  if (q.includes('where is arvind based') || q.includes('location') || q.includes('where does he live')) {
     return {
-      response:
-        "One of the toughest challenges Arvind solved in BunkMate was handling messy, unstructured scanned timetables ( erratic grid layouts, mobile photos) reliably with AI vision APIs while keeping the UI butter-smooth on low-end Android WebViews.",
-      topic: 'bunkmate',
-      suggestions: getContextualSuggestions('bunkmate'),
+      type: 'LOCAL',
+      text: `Arvind is based in ${ARVIND_PROFILE_KNOWLEDGE.location}.`,
+      topic: 'identity',
     };
   }
 
-  if (
-    q.includes('hire') ||
-    q.includes('job') ||
-    q.includes('open for roles') ||
-    q.includes('available for work') ||
-    q.includes('work together')
-  ) {
-    globalContext.activeTopic = 'hire';
+  if (q.includes('skill') || q.includes('tech stack') || q.includes('languages') || q.includes('technologies does he know')) {
+    activeTopic = 'skills';
+    const s = ARVIND_PROFILE_KNOWLEDGE.skills;
     return {
-      response:
-        "Yeah! Arvind is actively looking for AI and Full-Stack Engineering roles where he can build high-impact digital products. You can reach out directly via email at arvindmadaan27@gmail.com or connect on LinkedIn (linkedin.com/in/arvindmadaan2704).",
-      topic: 'hire',
-      suggestions: getContextualSuggestions('hire'),
-    };
-  }
-
-  if (
-    q.includes('github') ||
-    q.includes('code repository') ||
-    q.includes('source code')
-  ) {
-    globalContext.activeTopic = 'contact';
-    return {
-      response:
-        "You can check out all of Arvind's open-source repositories and project code on GitHub at https://github.com/arvind040606.",
-      topic: 'contact',
-      suggestions: getContextualSuggestions('contact'),
-    };
-  }
-
-  if (
-    q.includes('contact') ||
-    q.includes('email') ||
-    q.includes('reach') ||
-    q.includes('linkedin')
-  ) {
-    globalContext.activeTopic = 'contact';
-    return {
-      response:
-        "You can connect with Arvind via Gmail at arvindmadaan27@gmail.com or on LinkedIn at https://www.linkedin.com/in/arvindmadaan2704.",
-      topic: 'contact',
-      suggestions: getContextualSuggestions('contact'),
-    };
-  }
-
-  // 3. Technical Stack Questions
-  if (
-    q.includes('stack') ||
-    q.includes('technology') ||
-    q.includes('technologies') ||
-    q.includes('languages') ||
-    q.includes('skills')
-  ) {
-    globalContext.activeTopic = 'skills';
-    return {
-      response:
-        "Arvind's primary stack spans React, TypeScript, Vite, Tailwind CSS, and Framer Motion on the frontend. On the backend and ML side, he uses Python, FastAPI, XGBoost, Scikit-Learn, Web Crypto APIs (AES-GCM, PBKDF2), REST APIs, and WebSockets.",
+      type: 'LOCAL',
+      text: `Arvind's core technical stack spans:\n\n• **Languages**: ${s.languages.join(', ')}\n• **Frontend**: ${s.frontend.join(', ')}\n• **Backend**: ${s.backend.join(', ')}\n• **AI/ML**: ${s.ai_ml.join(', ')}\n• **Security & Storage**: ${s.security.join(', ')}`,
       topic: 'skills',
-      suggestions: getContextualSuggestions('skills'),
     };
   }
 
-  // 4. Topic-Based & Context Follow-Up Resolution
-
-  // --- BUNKMATE DOMAIN ---
-  const isBunkmateQuery =
-    q.includes('bunkmate') ||
-    q.includes('bunk') ||
-    q.includes('timetable') ||
-    (globalContext.activeTopic === 'bunkmate' &&
-      (q.includes('it') || q.includes('encrypt') || q.includes('ocr') || q.includes('swipe') || q.includes('offline') || q.includes('security')));
-
-  if (isBunkmateQuery) {
-    globalContext.activeTopic = 'bunkmate';
-
-    if (q.includes('encrypt') || q.includes('security') || q.includes('aes') || q.includes('pbkdf2') || (globalContext.activeTopic === 'bunkmate' && q.includes('encrypt'))) {
-      return {
-        response:
-          "Actually, BunkMate relies on client-side Web Crypto APIs. It uses PBKDF2 for key derivation from user passphrases and 256-bit AES-GCM for payload encryption before persisting to IndexedDB. No unencrypted student data ever leaves the device.",
-        topic: 'bunkmate',
-        suggestions: getContextualSuggestions('bunkmate'),
-      };
-    }
-
-    if (q.includes('offline') || q.includes('local') || q.includes('why offline')) {
-      return {
-        response:
-          "Yeah — Arvind chose an offline-first architecture so students can log attendance instantly even with zero network coverage on campus. All reads and writes hit IndexedDB locally and sync seamlessly when online.",
-        topic: 'bunkmate',
-        suggestions: getContextualSuggestions('bunkmate'),
-      };
-    }
-
-    if (q.includes('ocr') || q.includes('vision') || q.includes('parsing')) {
-      return {
-        response:
-          "In BunkMate's AI timetable parser, uploaded schedule images or PDFs pass through Gemini 1.5 Flash Vision OCR. It extracts raw text, detects table grids, normalizes course codes, resolves period times, and returns a clean structured schedule JSON.",
-        topic: 'bunkmate',
-        suggestions: getContextualSuggestions('bunkmate'),
-      };
-    }
-
+  if (q.includes('contact') || q.includes('email') || q.includes('reach') || q.includes('hire') || q.includes('linkedin') || q.includes('github')) {
+    activeTopic = 'contact';
+    const c = ARVIND_PROFILE_KNOWLEDGE.contact;
     return {
-      response:
-        "Yeah — BunkMate is Arvind's flagship AI-powered student attendance companion. It features client-side Gemini vision timetable extraction, swipe-left to bunk & swipe-right to attend interactions, 256-bit AES-GCM local-first encryption, and offline PWA capability.",
+      type: 'LOCAL',
+      text: `You can reach out to Arvind directly via:\n\n• **Email**: ${c.email}\n• **LinkedIn**: ${c.linkedin}\n• **GitHub**: ${c.github}`,
+      topic: 'contact',
+    };
+  }
+
+  // 6. Context Switch Detection
+  if (q.includes('weather project') || q.includes('atmosphere')) {
+    activeTopic = 'atmosphere';
+  } else if (q.includes('cardio') || q.includes('heart') || q.includes('medical')) {
+    activeTopic = 'cardioguard';
+  } else if (q.includes('bunk') || q.includes('attendance')) {
+    activeTopic = 'bunkmate';
+  } else if (q.includes('campusbrain')) {
+    activeTopic = 'campusbrain';
+  } else if (q.includes('navi') || q.includes('voice')) {
+    activeTopic = 'navi';
+  }
+
+  // 7. General Project Enquiries & Active Context Follow-ups
+  if (q.includes('best project') || q.includes('top project') || q.includes('flagship')) {
+    activeTopic = 'bunkmate';
+    return {
+      type: 'LOCAL',
+      text: "BunkMate is one of Arvind's main projects — it's an AI-powered student attendance and academic companion designed around a local-first, zero-knowledge architecture. He's also built CardioGuard AI (clinical cardiovascular risk scoring) and Atmosphere AI (natural-language weather search).",
       topic: 'bunkmate',
-      suggestions: getContextualSuggestions('bunkmate'),
     };
   }
 
-  // --- CARDIOGUARD DOMAIN ---
-  const isCardioQuery =
-    q.includes('cardioguard') ||
-    q.includes('cardio') ||
-    q.includes('heart') ||
-    (globalContext.activeTopic === 'cardioguard' &&
-      (q.includes('it') || q.includes('model') || q.includes('shap') || q.includes('xgboost') || q.includes('latency') || q.includes('predict')));
+  if (q.includes('other projects') || q.includes('all projects') || q.includes('what projects')) {
+    return {
+      type: 'LOCAL',
+      text: "Arvind's portfolio highlights 5 key projects:\n\n1. **BunkMate**: AI student attendance assistant with 256-bit AES-GCM local encryption & timetable OCR.\n2. **CardioGuard AI**: Clinical cardiovascular risk assessor powered by XGBoost & SHAP TreeExplainer.\n3. **Atmosphere AI**: Natural-language weather search engine integrated with OpenMeteo APIs.\n4. **CampusBrain**: Campus administrative AI assistant.\n5. **Navi Voice Assistant**: Hands-free continuous voice loop assistant.",
+      topic: 'general',
+    };
+  }
 
-  if (isCardioQuery) {
-    globalContext.activeTopic = 'cardioguard';
+  // Active Topic pronoun resolution ("it", "that project", "why did he build it?", "what technologies does it use?")
 
-    if (q.includes('model') || q.includes('xgboost') || q.includes('algorithm')) {
+  // --- BUNKMATE ---
+  if (q.includes('bunkmate') || (activeTopic === 'bunkmate' && (q.includes('it') || q.includes('this project') || q.includes('that project')))) {
+    activeTopic = 'bunkmate';
+    const p = ARVIND_PROJECTS_KNOWLEDGE.bunkmate;
+
+    if (q.includes('why') || q.includes('reason') || q.includes('build it')) {
       return {
-        response:
-          "CardioGuard AI uses a trained XGBoost binary classification model. Patient clinical vectors (Age, BP, Cholesterol, Max Heart Rate) are normalized and evaluated across decision trees to compute an exact logistic sigmoid risk probability.",
-        topic: 'cardioguard',
-        suggestions: getContextualSuggestions('cardioguard'),
+        type: 'LOCAL',
+        text: "Arvind built BunkMate because traditional student attendance apps are bloated, invasive, and rely on server tracking. He wanted a fast, mobile-first companion where attendance calculations, AI timetable OCR vision parsing, and schedule security happen 100% locally on the device.",
+        topic: 'bunkmate',
       };
     }
 
-    if (q.includes('shap') || q.includes('explain') || q.includes('why shap')) {
+    if (q.includes('technology') || q.includes('tech') || q.includes('stack') || q.includes('use')) {
       return {
-        response:
-          "Arvind integrated SHAP (SHapley Additive exPlanations) TreeExplainer because medical ML models shouldn't be black boxes. SHAP computes additive logit contributions per feature, showing exactly why a patient was classified as high or low risk.",
-        topic: 'cardioguard',
-        suggestions: getContextualSuggestions('cardioguard'),
+        type: 'LOCAL',
+        text: `BunkMate is built using: ${p.technologies.join(', ')}.`,
+        topic: 'bunkmate',
       };
     }
 
-    if (q.includes('latency') || q.includes('speed') || q.includes('ms')) {
+    if (q.includes('encryption') || q.includes('security') || q.includes('aes')) {
       return {
-        response:
-          "Inference latency is measured in real-time using performance.now(). Feature normalization, XGBoost logit evaluation, sigmoid probability calculation, and SHAP matrix ranking complete in under 1ms.",
-        topic: 'cardioguard',
-        suggestions: getContextualSuggestions('cardioguard'),
+        type: 'LOCAL',
+        text: "BunkMate uses client-side Web Crypto APIs: PBKDF2 key derivation from user passphrases and 256-bit AES-GCM encryption before persisting to IndexedDB.",
+        topic: 'bunkmate',
+      };
+    }
+
+    if (q.includes('something else') || q.includes('tell me more')) {
+      return {
+        type: 'LOCAL',
+        text: `In addition to attendance logging, BunkMate features client-side Gemini 1.5 Flash Vision OCR that automatically parses scanned course timetables into structured schedule grids.`,
+        topic: 'bunkmate',
       };
     }
 
     return {
-      response:
-        "CardioGuard AI is Arvind's clinical decision-support analytical platform. It computes cardiovascular risk probabilities using a trained XGBoost model and delivers explainable feature rankings using SHAP TreeExplainer matrices via a FastAPI backend.",
+      type: 'LOCAL',
+      text: `BunkMate is ${p.tagline}. Purpose: ${p.purpose}`,
+      topic: 'bunkmate',
+    };
+  }
+
+  // --- CARDIOGUARD ---
+  if (q.includes('cardioguard') || (activeTopic === 'cardioguard' && (q.includes('it') || q.includes('this project') || q.includes('that project')))) {
+    activeTopic = 'cardioguard';
+    const p = ARVIND_PROJECTS_KNOWLEDGE.cardioguard;
+
+    if (q.includes('technology') || q.includes('tech') || q.includes('stack') || q.includes('use')) {
+      return {
+        type: 'LOCAL',
+        text: `CardioGuard AI is built using: ${p.technologies.join(', ')}.`,
+        topic: 'cardioguard',
+      };
+    }
+
+    if (q.includes('why') || q.includes('reason') || q.includes('shap')) {
+      return {
+        type: 'LOCAL',
+        text: "Arvind integrated SHAP (SHapley Additive exPlanations) TreeExplainer because medical ML models shouldn't be black boxes. SHAP computes additive logit contributions per feature, showing exactly why a patient was classified as high or low risk.",
+        topic: 'cardioguard',
+      };
+    }
+
+    return {
+      type: 'LOCAL',
+      text: `CardioGuard AI is ${p.tagline}. Purpose: ${p.purpose}`,
       topic: 'cardioguard',
-      suggestions: getContextualSuggestions('cardioguard'),
     };
   }
 
-  // --- ATMOSPHERE AI DOMAIN ---
-  const isAtmosphereQuery =
-    q.includes('atmosphere') ||
-    q.includes('weather') ||
-    (globalContext.activeTopic === 'atmosphere' &&
-      (q.includes('api') || q.includes('nlp') || q.includes('openmeteo') || q.includes('query')));
+  // --- ATMOSPHERE AI ---
+  if (q.includes('atmosphere') || (activeTopic === 'atmosphere' && (q.includes('it') || q.includes('this project') || q.includes('that project')))) {
+    activeTopic = 'atmosphere';
+    const p = ARVIND_PROJECTS_KNOWLEDGE.atmosphere;
 
-  if (isAtmosphereQuery) {
-    globalContext.activeTopic = 'atmosphere';
-
-    if (q.includes('nlp') || q.includes('natural language') || q.includes('intent')) {
+    if (q.includes('technology') || q.includes('tech') || q.includes('stack') || q.includes('use')) {
       return {
-        response:
-          "The NLP weather engine parses raw text to extract intent (Precipitation vs Temperature vs Wind), time target (Tonight, Tomorrow, Weekend), and target location. It then computes a parse accuracy score based on token confidence.",
+        type: 'LOCAL',
+        text: `Atmosphere AI is built using: ${p.technologies.join(', ')}.`,
         topic: 'atmosphere',
-        suggestions: getContextualSuggestions('atmosphere'),
-      };
-    }
-
-    if (q.includes('api') || q.includes('openmeteo') || q.includes('endpoint')) {
-      return {
-        response:
-          "Atmosphere AI uses OpenMeteo's Geocoding API for spatial coordinates resolution and OpenMeteo's Forecast API for real-time WMO weather codes, hourly precipitation probabilities, wind speeds, and temperatures.",
-        topic: 'atmosphere',
-        suggestions: getContextualSuggestions('atmosphere'),
       };
     }
 
     return {
-      response:
-        "Atmosphere AI is an intelligent atmospheric search platform. It translates natural-language weather queries into live geocoded API requests and delivers real-time meteorological metrics with measured HTTP latency.",
+      type: 'LOCAL',
+      text: `Atmosphere AI is ${p.tagline}. Purpose: ${p.purpose}`,
       topic: 'atmosphere',
-      suggestions: getContextualSuggestions('atmosphere'),
     };
   }
 
-  // --- CAMPUSBRAIN / NAVI DOMAIN ---
-  if (q.includes('campusbrain') || q.includes('campus')) {
-    globalContext.activeTopic = 'campusbrain';
-    return {
-      response:
-        "CampusBrain is an AI student assistant platform built during a hackathon. It features full-stack architecture, dynamic database indexing, AI querying, and automated campus workflow support.",
-      topic: 'campusbrain',
-      suggestions: getContextualSuggestions('campusbrain'),
-    };
-  }
-
-  if (q.includes('navi') || q.includes('voice')) {
-    globalContext.activeTopic = 'navi';
-    return {
-      response:
-        "Navi is Arvind's experimental hands-free AI voice assistant built with continuous SpeechRecognition, SpeechSynthesis, and FastAPI WebSocket backends for real-time conversational loops.",
-      topic: 'navi',
-      suggestions: getContextualSuggestions('navi'),
-    };
-  }
-
-  // 5. Unknown / Out-of-bounds Query Handling (Strict non-hallucination)
-  globalContext.activeTopic = 'general';
+  // 8. If query is a general question requiring generative reasoning or not matched in local patterns -> Send to GEMINI
   return {
-    response:
-      "I don't have that verified information about Arvind yet. You can ask me about his projects (BunkMate, CardioGuard, Atmosphere AI), his tech stack, development architecture, or how to connect with him!",
-    topic: 'general',
-    suggestions: getContextualSuggestions('general'),
+    type: 'GEMINI',
+    reason: 'Deep Reasoning / Generative Query Not Matched In Local Rule Engine',
   };
 }

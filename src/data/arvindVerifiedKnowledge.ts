@@ -17,7 +17,9 @@ export interface ProfileKnowledge {
   name: string;
   nickname: string;
   education: string;
+  college: string;
   location: string;
+  dob: string;
   bio: string;
   tagline: string;
   focus: string;
@@ -37,11 +39,25 @@ export interface ProfileKnowledge {
   };
 }
 
+// Calculate dynamic age from DOB (June 6, 2004)
+export function getArvindAge(): number {
+  const dob = new Date(2004, 5, 6); // Month index 5 is June
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 export const ARVIND_PROFILE_KNOWLEDGE: ProfileKnowledge = {
   name: "Arvind Madaan",
   nickname: "Arry",
   education: "B.Tech in Computer Science Engineering",
+  college: "Amritsar Group of Colleges (AGC), Amritsar, Punjab",
   location: "Punjab, India",
+  dob: "2004-06-06",
   bio: "Computer Science Engineering student focused on building AI-powered full-stack products, privacy-first architectures, and intelligent web applications.",
   tagline: "Building intelligent products, not just websites.",
   focus: "AI + Full-Stack Product Development",
@@ -133,19 +149,19 @@ export const ARVIND_PROJECTS_KNOWLEDGE: Record<string, ProjectKnowledge> = {
 };
 
 /**
- * Lightweight Context Retriever
- * Extracts only relevant portfolio facts based on user query and recent history to keep context clean and fast.
+ * Pruned Context Retriever for Gemini Calls
+ * Extracts only relevant facts for the query to optimize tokens.
  */
 export function retrieveContextForQuery(query: string, historySummary: string = ""): string {
   const text = (query + " " + historySummary).toLowerCase();
   const chunks: string[] = [];
 
-  // Always include basic profile grounding
+  // Profile basics
   chunks.push(
-    `ARVIND PROFILE: ${ARVIND_PROFILE_KNOWLEDGE.name} (${ARVIND_PROFILE_KNOWLEDGE.nickname}). ${ARVIND_PROFILE_KNOWLEDGE.education}, ${ARVIND_PROFILE_KNOWLEDGE.location}. Focus: ${ARVIND_PROFILE_KNOWLEDGE.focus}. Contact: Email=${ARVIND_PROFILE_KNOWLEDGE.contact.email}, LinkedIn=${ARVIND_PROFILE_KNOWLEDGE.contact.linkedin}, GitHub=${ARVIND_PROFILE_KNOWLEDGE.contact.github}.`
+    `ARVIND PROFILE: ${ARVIND_PROFILE_KNOWLEDGE.name} (${ARVIND_PROFILE_KNOWLEDGE.nickname}), ${getArvindAge()} years old. Education: ${ARVIND_PROFILE_KNOWLEDGE.education} at ${ARVIND_PROFILE_KNOWLEDGE.college}. Location: ${ARVIND_PROFILE_KNOWLEDGE.location}. Focus: ${ARVIND_PROFILE_KNOWLEDGE.focus}. Contact: Email=${ARVIND_PROFILE_KNOWLEDGE.contact.email}, LinkedIn=${ARVIND_PROFILE_KNOWLEDGE.contact.linkedin}, GitHub=${ARVIND_PROFILE_KNOWLEDGE.contact.github}.`
   );
 
-  // Check BunkMate keywords
+  // Check BunkMate
   if (
     text.includes("bunkmate") ||
     text.includes("bunk") ||
@@ -157,11 +173,11 @@ export function retrieveContextForQuery(query: string, historySummary: string = 
   ) {
     const p = ARVIND_PROJECTS_KNOWLEDGE.bunkmate;
     chunks.push(
-      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}. Live Demo: ${p.liveDemoUrl}`
+      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}.`
     );
   }
 
-  // Check CardioGuard keywords
+  // Check CardioGuard
   if (
     text.includes("cardio") ||
     text.includes("cardioguard") ||
@@ -173,11 +189,11 @@ export function retrieveContextForQuery(query: string, historySummary: string = 
   ) {
     const p = ARVIND_PROJECTS_KNOWLEDGE.cardioguard;
     chunks.push(
-      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}. Live Demo: ${p.liveDemoUrl}`
+      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}.`
     );
   }
 
-  // Check Atmosphere AI keywords
+  // Check Atmosphere AI
   if (
     text.includes("atmosphere") ||
     text.includes("weather") ||
@@ -186,11 +202,11 @@ export function retrieveContextForQuery(query: string, historySummary: string = 
   ) {
     const p = ARVIND_PROJECTS_KNOWLEDGE.atmosphere;
     chunks.push(
-      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}. Live Demo: ${p.liveDemoUrl}`
+      `PROJECT - ${p.name}: ${p.tagline}. Purpose: ${p.purpose}. Architecture: ${p.architecture}. Tech: ${p.technologies.join(", ")}. Features: ${p.features.join(" | ")}.`
     );
   }
 
-  // Check CampusBrain & Navi keywords
+  // Check CampusBrain & Navi
   if (text.includes("campusbrain") || text.includes("campus")) {
     const p = ARVIND_PROJECTS_KNOWLEDGE.campusbrain;
     chunks.push(`PROJECT - ${p.name}: ${p.tagline}. Tech: ${p.technologies.join(", ")}. Purpose: ${p.purpose}`);
@@ -200,26 +216,18 @@ export function retrieveContextForQuery(query: string, historySummary: string = 
     chunks.push(`PROJECT - ${p.name}: ${p.tagline}. Tech: ${p.technologies.join(", ")}. Purpose: ${p.purpose}`);
   }
 
-  // Check Skills keywords
+  // Check Skills
   if (
     text.includes("skill") ||
     text.includes("stack") ||
     text.includes("technology") ||
     text.includes("language") ||
     text.includes("python") ||
-    text.includes("react") ||
-    text.includes("typescript")
+    text.includes("react")
   ) {
     const s = ARVIND_PROFILE_KNOWLEDGE.skills;
     chunks.push(
       `VERIFIED SKILLS: Languages: ${s.languages.join(", ")}. Frontend: ${s.frontend.join(", ")}. Backend: ${s.backend.join(", ")}. Databases: ${s.databases.join(", ")}. AI/ML: ${s.ai_ml.join(", ")}. Security: ${s.security.join(", ")}.`
-    );
-  }
-
-  // If general or broad, include high-level overview of main projects
-  if (chunks.length <= 1) {
-    chunks.push(
-      `MAIN PROJECTS OVERVIEW: BunkMate (Offline-first AI attendance, AES-GCM encryption), CardioGuard AI (XGBoost heart risk prediction & SHAP explainability), Atmosphere AI (NLP weather search with OpenMeteo APIs), CampusBrain, Navi Voice Assistant.`
     );
   }
 

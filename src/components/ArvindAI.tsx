@@ -15,6 +15,7 @@ interface DisplayMessage {
   isStreaming?: boolean;
   timestamp: string;
   isError?: boolean;
+  route?: 'LOCAL' | 'GEMINI';
   actionLinks?: Array<{ label: string; url: string; icon?: 'external' | 'github' | 'mail' }>;
 }
 
@@ -24,16 +25,15 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     {
       id: 'init-1',
       sender: 'ai',
-      text: "Hey! I'm ARVIND.AI — a virtual LLM representation of Arvind Madaan. Ask me anything about his projects (BunkMate, CardioGuard AI, Atmosphere AI), technical decisions, skills, or engineering background!",
+      text: "Hey! I'm ARVIND.AI — a virtual representation of Arvind Madaan. Ask me anything about his projects (BunkMate, CardioGuard AI, Atmosphere AI), technical choices, skills, or background!",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
   
-  // Session memory for LLM context (role: 'user' | 'model')
+  // Session memory for LLM / local context
   const [sessionHistory, setSessionHistory] = useState<ChatMessageItem[]>([]);
   const [isThinking, setIsThinking] = useState(false);
-  const [isLLMActive, setIsLLMActive] = useState<boolean | null>(null);
-  const [statusText, setStatusText] = useState('GEMINI 2.5 LLM PIPELINE INITIALIZED');
+  const [statusText, setStatusText] = useState('LOCAL KNOWLEDGE // GEMINI OPTIMIZED');
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -41,9 +41,12 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
   const defaultSuggestions = [
     "hlo",
     "who is Arvind?",
+    "how old is he?",
+    "which college does he study in?",
     "what is his best project?",
-    "tell me more about it",
-    "How does CardioGuard AI use SHAP?",
+    "why did he build it?",
+    "what technologies does it use?",
+    "compare BunkMate and CardioGuard from an engineering perspective",
   ];
 
   const scrollToBottom = () => {
@@ -120,29 +123,25 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInput('');
     setIsThinking(true);
-    setStatusText('Connecting to Gemini 2.5 API...');
+    setStatusText('Processing local intent & router...');
 
-    // Call real LLM service
+    // Call hybrid AI service (Local Knowledge Router + Gemini 2.5)
     const serviceResult = await fetchArvindAIResponse(query, sessionHistory);
     const rawAiResponse = serviceResult.text;
-    const isSuccess = serviceResult.isRealLLM;
+    const isGemini = serviceResult.route === 'GEMINI';
 
-    setIsLLMActive(isSuccess);
+    // Update conversation memory
+    const updatedHistory: ChatMessageItem[] = [
+      ...sessionHistory,
+      { role: 'user', content: query },
+      { role: 'model', content: rawAiResponse },
+    ];
+    setSessionHistory(updatedHistory);
 
-    if (isSuccess) {
-      // Update multi-turn session memory
-      const updatedHistory: ChatMessageItem[] = [
-        ...sessionHistory,
-        { role: 'user', content: query },
-        { role: 'model', content: rawAiResponse },
-      ];
-      setSessionHistory(updatedHistory);
-    }
-
-    // Stream LLM response text word by word into UI
+    // Stream LLM / Local response text word by word into UI
     const words = rawAiResponse.split(' ');
     const aiMsgId = `ai-${Date.now()}`;
-    const actionLinks = isSuccess ? extractActionLinks(rawAiResponse) : [];
+    const actionLinks = extractActionLinks(rawAiResponse);
 
     const initialAiMsg: DisplayMessage = {
       id: aiMsgId,
@@ -150,13 +149,16 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
       text: '',
       isStreaming: true,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isError: !isSuccess,
+      isError: !!serviceResult.error,
+      route: serviceResult.route,
       actionLinks,
     };
 
     setMessages((prev) => [...prev, initialAiMsg]);
     setIsThinking(false);
-    setStatusText(isSuccess ? 'GEMINI 2.5 LLM ENGINE ACTIVE' : 'GEMINI API CONFIGURATION REQUIRED');
+    setStatusText(
+      isGemini ? 'GEMINI 2.5 // REASONING ACTIVE' : 'LOCAL KNOWLEDGE // GEMINI NOT REQUIRED'
+    );
 
     let currentWordIdx = 0;
     if (streamingTimerRef.current) clearInterval(streamingTimerRef.current);
@@ -175,7 +177,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
           prev.map((msg) => (msg.id === aiMsgId ? { ...msg, isStreaming: false } : msg))
         );
       }
-    }, 20);
+    }, 18);
   };
 
   return (
@@ -193,10 +195,10 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
                 <h3 className="font-syne font-extrabold text-white text-base leading-none">
                   ARVIND.AI ASSISTANT
                 </h3>
-                <span className={`w-2 h-2 rounded-full ${isLLMActive === false ? 'bg-amber-400' : 'bg-emerald-400'} animate-ping`} />
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               </div>
               <span className="font-mono text-[10px] text-[#00f0ff] tracking-widest uppercase">
-                {isLLMActive === false ? 'API KEY REQUIRED FOR GEMINI' : 'POWERED BY GEMINI 2.5 LLM'}
+                HYBRID AI (LOCAL KNOWLEDGE + GEMINI 2.5)
               </span>
             </div>
           </div>
@@ -225,7 +227,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
         <div className="px-6 py-1.5 bg-black/60 border-b border-white/5 flex items-center justify-between text-[10px] font-mono text-neutral-400">
           <span className="flex items-center gap-1.5">
             <Terminal className="w-3 h-3 text-[#00f0ff]" />
-            <span>{statusText}</span>
+            <span className="font-bold text-cyan-300">{statusText}</span>
           </span>
           <span className="text-emerald-400 font-bold">SESSION MEMORY ({sessionHistory.length / 2} TURNS)</span>
         </div>
@@ -283,13 +285,16 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
                   </div>
                 )}
 
-                <span
-                  className={`font-mono text-[9px] block mt-1.5 text-right ${
-                    msg.sender === 'user' ? 'text-neutral-500' : 'text-neutral-400'
-                  }`}
-                >
-                  {msg.timestamp}
-                </span>
+                <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-white/5 font-mono text-[9px] text-neutral-400">
+                  {msg.sender === 'ai' && msg.route && (
+                    <span className={`px-1.5 py-0.5 rounded ${
+                      msg.route === 'GEMINI' ? 'bg-[#00f0ff]/20 text-[#00f0ff]' : 'bg-emerald-500/20 text-emerald-300'
+                    }`}>
+                      {msg.route === 'GEMINI' ? 'GEMINI 2.5' : 'LOCAL ENGINE'}
+                    </span>
+                  )}
+                  <span className="ml-auto">{msg.timestamp}</span>
+                </div>
               </div>
 
               {msg.sender === 'user' && (
@@ -307,7 +312,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
               </div>
               <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-neutral-400 text-xs font-mono animate-pulse flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
-                <span>Invoking Gemini 2.5 LLM reasoning...</span>
+                <span>Evaluating intent & context...</span>
               </div>
             </div>
           )}
