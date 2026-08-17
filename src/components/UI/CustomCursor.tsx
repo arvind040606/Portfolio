@@ -32,6 +32,8 @@ export const CustomCursor: React.FC = () => {
       } else if (
         target.tagName === "BUTTON" ||
         target.tagName === "A" ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
         target.closest("button") ||
         target.closest("a") ||
         target.getAttribute("role") === "button" ||
@@ -55,7 +57,7 @@ export const CustomCursor: React.FC = () => {
     <>
       {/* Central glowing dot */}
       <motion.div
-        className="fixed top-0 left-0 w-2.5 h-2.5 bg-cyan-400 rounded-full pointer-events-none z-[9999] mix-blend-difference"
+        className="fixed top-0 left-0 w-2.5 h-2.5 bg-cyan-400 rounded-full pointer-events-none z-[999999] mix-blend-difference"
         animate={{
           x: position.x - 5,
           y: position.y - 5,
@@ -66,7 +68,7 @@ export const CustomCursor: React.FC = () => {
 
       {/* Outer interactive follower ring with optional label pill */}
       <motion.div
-        className="fixed top-0 left-0 rounded-full border pointer-events-none z-[9998] flex items-center justify-center backdrop-blur-[2px]"
+        className="fixed top-0 left-0 rounded-full border pointer-events-none z-[999998] flex items-center justify-center backdrop-blur-[2px]"
         animate={{
           x: cursorText ? position.x - 48 : position.y && position.x - 20,
           y: cursorText ? position.y - 18 : position.y - 20,
