@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Bot, User, RefreshCw, Terminal, ExternalLink, Github, Mail, AlertTriangle } from 'lucide-react';
+import { X, Send, Sparkles, Bot, User, RefreshCw, ExternalLink, Github, Mail, AlertTriangle } from 'lucide-react';
 import { fetchArvindAIResponse, ChatMessageItem } from '../services/arvindAIService';
 import { ARVIND_PROJECTS_KNOWLEDGE, ARVIND_PROFILE_KNOWLEDGE } from '../data/arvindVerifiedKnowledge';
 
@@ -15,7 +15,6 @@ interface DisplayMessage {
   isStreaming?: boolean;
   timestamp: string;
   isError?: boolean;
-  route?: 'LOCAL' | 'GEMINI';
   actionLinks?: Array<{ label: string; url: string; icon?: 'external' | 'github' | 'mail' }>;
 }
 
@@ -25,7 +24,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     {
       id: 'init-1',
       sender: 'ai',
-      text: "Hey! I'm ARVIND.AI — a virtual representation of Arvind Madaan. Ask me anything about his projects (BunkMate, CardioGuard AI, Atmosphere AI), technical choices, skills, or background!",
+      text: "Hey! I'm ARVIND.AI — a virtual representation of Arvind Madaan. Ask me anything about his projects, technical stack, engineering choices, or background!",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -33,7 +32,6 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
   // Session memory for LLM / local context
   const [sessionHistory, setSessionHistory] = useState<ChatMessageItem[]>([]);
   const [isThinking, setIsThinking] = useState(false);
-  const [statusText, setStatusText] = useState('LOCAL KNOWLEDGE // GEMINI OPTIMIZED');
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const streamingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -71,12 +69,11 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     if (streamingTimerRef.current) clearInterval(streamingTimerRef.current);
     setSessionHistory([]);
     setIsThinking(false);
-    setStatusText('CONVERSATION MEMORY RESET');
     setMessages([
       {
         id: `init-${Date.now()}`,
         sender: 'ai',
-        text: "Session context reset. What would you like to know about Arvind's projects or tech stack?",
+        text: "Session context reset. What would you like to know about Arvind's work?",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -123,12 +120,10 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInput('');
     setIsThinking(true);
-    setStatusText('Processing local intent & router...');
 
-    // Call hybrid AI service (Local Knowledge Router + Gemini 2.5)
+    // Call hybrid AI service (Local Knowledge Router + Gemini 2.5 internally)
     const serviceResult = await fetchArvindAIResponse(query, sessionHistory);
     const rawAiResponse = serviceResult.text;
-    const isGemini = serviceResult.route === 'GEMINI';
 
     // Update conversation memory
     const updatedHistory: ChatMessageItem[] = [
@@ -138,7 +133,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
     ];
     setSessionHistory(updatedHistory);
 
-    // Stream LLM / Local response text word by word into UI
+    // Stream response text word by word for a smooth conversational feel
     const words = rawAiResponse.split(' ');
     const aiMsgId = `ai-${Date.now()}`;
     const actionLinks = extractActionLinks(rawAiResponse);
@@ -150,15 +145,11 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
       isStreaming: true,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isError: !!serviceResult.error,
-      route: serviceResult.route,
       actionLinks,
     };
 
     setMessages((prev) => [...prev, initialAiMsg]);
     setIsThinking(false);
-    setStatusText(
-      isGemini ? 'GEMINI 2.5 // REASONING ACTIVE' : 'LOCAL KNOWLEDGE // GEMINI NOT REQUIRED'
-    );
 
     let currentWordIdx = 0;
     if (streamingTimerRef.current) clearInterval(streamingTimerRef.current);
@@ -181,32 +172,32 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[999990] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
-      <div className="relative w-full max-w-2xl h-[620px] max-h-[90vh] bg-[#090b10] border border-[#00f0ff]/30 rounded-2xl shadow-[0_0_50px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden font-sans">
+    <div className="fixed inset-0 z-[999990] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-2xl animate-in fade-in duration-300">
+      <div className="relative w-full max-w-2xl h-[620px] max-h-[90vh] bg-[#090b10] border border-white/15 rounded-2xl shadow-[0_0_60px_rgba(0,240,255,0.15)] flex flex-col overflow-hidden font-sans">
         
-        {/* Header Bar */}
+        {/* Sleek Professional Header */}
         <div className="flex items-center justify-between p-4 px-6 bg-[#040508] border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#00f0ff]/20 border border-[#00f0ff] flex items-center justify-center text-[#00f0ff] shrink-0">
-              <Sparkles className="w-4 h-4 animate-pulse" />
+            <div className="w-8 h-8 rounded-full bg-[#00f0ff]/15 border border-[#00f0ff]/40 flex items-center justify-center text-[#00f0ff] shrink-0">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-syne font-extrabold text-white text-base leading-none">
                   ARVIND.AI ASSISTANT
                 </h3>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400" title="Available" />
               </div>
-              <span className="font-mono text-[10px] text-[#00f0ff] tracking-widest uppercase">
-                HYBRID AI (LOCAL KNOWLEDGE + GEMINI 2.5)
-              </span>
+              <p className="text-[11px] text-neutral-400 font-sans mt-0.5">
+                Ask me about Arvind, his work, and projects.
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleResetChat}
-              title="Reset Conversation Session"
+              title="Reset conversation"
               data-cursor="RESET"
               className="p-2 rounded-full bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
             >
@@ -223,15 +214,6 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Engine Telemetry Bar */}
-        <div className="px-6 py-1.5 bg-black/60 border-b border-white/5 flex items-center justify-between text-[10px] font-mono text-neutral-400">
-          <span className="flex items-center gap-1.5">
-            <Terminal className="w-3 h-3 text-[#00f0ff]" />
-            <span className="font-bold text-cyan-300">{statusText}</span>
-          </span>
-          <span className="text-emerald-400 font-bold">SESSION MEMORY ({sessionHistory.length / 2} TURNS)</span>
-        </div>
-
         {/* Message Log */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 font-sans">
           {messages.map((msg) => (
@@ -243,7 +225,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 ${
                   msg.isError
                     ? 'bg-amber-500/20 border border-amber-400 text-amber-300'
-                    : 'bg-[#00f0ff]/10 border border-[#00f0ff]/40 text-[#00f0ff]'
+                    : 'bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff]'
                 }`}>
                   {msg.isError ? <AlertTriangle className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                 </div>
@@ -252,9 +234,9 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
               <div
                 className={`max-w-[85%] p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-white text-black font-medium rounded-tr-none shadow-lg'
+                    ? 'bg-white text-black font-medium rounded-tr-none shadow-md'
                     : msg.isError
-                    ? 'bg-amber-950/40 border border-amber-500/30 text-amber-200 rounded-tl-none font-mono'
+                    ? 'bg-amber-950/30 border border-amber-500/30 text-amber-200 rounded-tl-none font-sans'
                     : 'bg-white/5 border border-white/10 text-neutral-200 rounded-tl-none'
                 }`}
               >
@@ -265,16 +247,16 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
                   )}
                 </div>
 
-                {/* Interactive Action Links (Project Demo / GitHub / Email) */}
+                {/* Interactive Action Links */}
                 {msg.sender === 'ai' && msg.actionLinks && msg.actionLinks.length > 0 && !msg.isStreaming && (
-                  <div className="mt-3 pt-2 border-t border-white/10 flex flex-wrap gap-2">
+                  <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap gap-2">
                     {msg.actionLinks.map((link, idx) => (
                       <a
                         key={idx}
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black font-mono text-[11px] font-bold transition-all"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00f0ff]/10 border border-[#00f0ff]/30 text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black font-mono text-[11px] font-medium transition-all"
                       >
                         {link.icon === 'github' && <Github className="w-3 h-3" />}
                         {link.icon === 'mail' && <Mail className="w-3 h-3" />}
@@ -285,15 +267,8 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-white/5 font-mono text-[9px] text-neutral-400">
-                  {msg.sender === 'ai' && msg.route && (
-                    <span className={`px-1.5 py-0.5 rounded ${
-                      msg.route === 'GEMINI' ? 'bg-[#00f0ff]/20 text-[#00f0ff]' : 'bg-emerald-500/20 text-emerald-300'
-                    }`}>
-                      {msg.route === 'GEMINI' ? 'GEMINI 2.5' : 'LOCAL ENGINE'}
-                    </span>
-                  )}
-                  <span className="ml-auto">{msg.timestamp}</span>
+                <div className="flex justify-end mt-1.5 font-sans text-[10px] text-neutral-400">
+                  <span>{msg.timestamp}</span>
                 </div>
               </div>
 
@@ -307,12 +282,12 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
 
           {isThinking && (
             <div className="flex gap-3 justify-start">
-              <div className="w-7 h-7 rounded-full bg-[#00f0ff]/10 border border-[#00f0ff]/40 flex items-center justify-center text-[#00f0ff] shrink-0">
+              <div className="w-7 h-7 rounded-full bg-[#00f0ff]/10 border border-[#00f0ff]/30 flex items-center justify-center text-[#00f0ff] shrink-0">
                 <Sparkles className="w-3.5 h-3.5 animate-spin" />
               </div>
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-neutral-400 text-xs font-mono animate-pulse flex items-center gap-2">
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-neutral-400 text-xs font-sans animate-pulse flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
-                <span>Evaluating intent & context...</span>
+                <span>Thinking...</span>
               </div>
             </div>
           )}
@@ -328,7 +303,7 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
               onClick={() => handleSend(prompt)}
               disabled={isThinking}
               data-cursor="ASK"
-              className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-[#00f0ff] hover:text-[#00f0ff] text-neutral-300 font-mono text-[11px] whitespace-nowrap transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-[#00f0ff] hover:text-[#00f0ff] text-neutral-300 font-sans text-[11px] whitespace-nowrap transition-colors cursor-pointer"
             >
               {prompt}
             </button>
@@ -347,8 +322,8 @@ export const ArvindAI: React.FC<ArvindAIProps> = ({ isOpen, onClose }) => {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask anything about Arvind's projects, tech stack, or architecture..."
-            className="flex-1 px-4 py-3 rounded-full bg-white/5 border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-[#00f0ff] transition-colors"
+            placeholder="Ask about Arvind's projects, tech stack, or background..."
+            className="flex-1 px-4 py-3 rounded-full bg-white/5 border border-white/15 text-white font-sans text-xs focus:outline-none focus:border-[#00f0ff] transition-colors"
           />
           <button
             type="submit"

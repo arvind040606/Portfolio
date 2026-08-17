@@ -21,10 +21,10 @@ export const Contact: React.FC = () => {
         </div>
 
         {/* Core Statement & Technical Contact Split */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           
-          {/* Main Headline */}
-          <div className="lg:col-span-7 space-y-8">
+          {/* Main Headline & Call to Action */}
+          <div className="lg:col-span-7 space-y-8 pr-0 lg:pr-4">
             <h2 className="font-syne text-5xl sm:text-7xl font-extrabold text-white tracking-tighter leading-[0.95]">
               LET'S BUILD <br />
               <span className="text-gradient-cyan">SOMETHING</span> <br />
@@ -84,32 +84,32 @@ export const Contact: React.FC = () => {
             </div>
           </div>
 
-          {/* Technical Info Card (No Photo) */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-sm rounded-2xl p-6 bg-[#07090e] border border-white/20 shadow-2xl space-y-6 font-mono">
+          {/* Technical Location HUD Card - Lifted Up & Properly Spaced */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end lg:pt-2">
+            <div className="relative w-full max-w-sm rounded-2xl p-6 bg-[#07090e] border border-white/20 shadow-2xl space-y-6 font-mono transform hover:border-[#00f0ff]/40 transition-colors">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <span className="text-xs font-bold text-white flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-[#00f0ff]" />
                   <span>LOCATION HUD</span>
                 </span>
-                <span className="text-[10px] text-emerald-400 font-bold">PUNJAB, INDIA</span>
+                <span className="text-[10px] text-emerald-400 font-bold tracking-wider">PUNJAB, INDIA</span>
               </div>
 
               <div className="space-y-3 text-xs text-neutral-300">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
                   <span className="text-neutral-400">AVAILABILITY</span>
-                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="text-emerald-400 font-bold flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>OPEN FOR ROLES</span>
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
                   <span className="text-neutral-400">PRIMARY FOCUS</span>
                   <span className="text-[#00f0ff] font-bold">AI × FULLSTACK</span>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
                   <span className="text-neutral-400">DEGREE</span>
                   <span className="text-white font-bold">CSE 2026</span>
                 </div>
