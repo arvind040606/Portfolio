@@ -10,6 +10,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
     if (!apiKey) {
       console.error('[ARVIND.AI API] ERROR: GEMINI_API_KEY missing from environment variables');
       return res.status(503).json({
